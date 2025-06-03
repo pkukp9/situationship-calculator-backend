@@ -1,3 +1,70 @@
+# Situationship Calculator API
+
+Backend API for the Situationship Calculator that analyzes text and screenshots of conversations to determine relationship potential.
+
+## API Endpoints
+
+- `/api/analyze-text` - POST endpoint for analyzing text conversations
+- `/api/analyze-screenshot` - POST endpoint for analyzing screenshots of conversations
+
+## Environment Variables
+
+Required environment variables:
+- `OPENAI_API_KEY` - Your OpenAI API key
+
+## Deployment Instructions
+
+1. Fork or clone this repository
+2. Install Vercel CLI: `npm i -g vercel`
+3. Login to Vercel: `vercel login`
+4. Deploy to Vercel: `vercel`
+5. Set environment variables in Vercel:
+   ```bash
+   vercel env add OPENAI_API_KEY
+   ```
+6. Deploy to production:
+   ```bash
+   vercel --prod
+   ```
+
+## Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Create `.env.local` with required environment variables:
+   ```
+   OPENAI_API_KEY=your_key_here
+   ```
+
+3. Run development server:
+   ```bash
+   npm run dev
+   ```
+
+## Frontend Integration
+
+The API endpoints can be called from the Lovable frontend at https://situationship-calculator.lovable.app/ using:
+
+```javascript
+// Text analysis
+fetch('https://your-vercel-url/api/analyze-text', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ text: 'conversation text here' })
+});
+
+// Screenshot analysis
+const formData = new FormData();
+formData.append('image', imageFile);
+fetch('https://your-vercel-url/api/analyze-screenshot', {
+  method: 'POST',
+  body: formData
+});
+```
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
