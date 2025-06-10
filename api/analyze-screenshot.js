@@ -1,4 +1,4 @@
-// Version: 2.0 - Fixed field names
+// Version: 2.0 - Fixed field names and request body parsing
 console.log('Screenshot API deployed:', new Date().toISOString());
 
 const OpenAI = require('openai');
@@ -7,46 +7,33 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type'
-};
-
-module.exports = async (req, res) => {
-  // Set CORS headers for all responses
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
-
-  // Handle CORS preflight
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  // Parse JSON body for Vercel serverless functions
-  if (typeof req.body === 'string') {
-    try {
-      req.body = JSON.parse(req.body);
-    } catch (e) {
-      return res.status(400).json({ error: "Invalid JSON body" });
-    }
-  }
-
+  
   try {
-    const { screenshot, mimeType } = req.body;
-
+    // For Vercel, body should already be parsed if Content-Type is application/json
+    console.log('Raw body:', req.body);
+    console.log('Body type:', typeof req.body);
+    
+    const { screenshot, mimeType } = req.body || {};
+    
     if (!screenshot) {
-      return res.status(400).json({ error: "Bestie, we need a screenshot to analyze!" });
+      return res.status(400).json({ error: 'No screenshot provided' });
     }
 
     if (!mimeType || !mimeType.startsWith('image/')) {
-      return res.status(400).json({ error: "Invalid image format!" });
+      return res.status(400).json({ error: 'Invalid image format' });
     }
 
     const completion = await openai.chat.completions.create({
@@ -103,7 +90,7 @@ module.exports = async (req, res) => {
       advice: lines.slice(-1)[0] || "Keep manifesting, bestie!"
     });
   } catch (error) {
-    console.error('Error processing screenshot:', error);
-    return res.status(500).json({ error: "Ope! Something went wrong analyzing your situation" });
+    console.error('Error:', error);
+    return res.status(500).json({ error: error.message });
   }
-}; 
+} 
