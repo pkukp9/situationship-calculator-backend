@@ -1,103 +1,73 @@
-# Situationship Calculator API
+# Situationship Calculator
 
-Backend API for the Situationship Calculator that analyzes text and screenshots of conversations to determine relationship potential.
+A fun tool to analyze your situationship using AI-powered insights, delivered with the wit and wisdom of Sex and the City.
 
-## API Endpoints
+## Project Structure
 
-- `/api/analyze-text` - POST endpoint for analyzing text conversations
-- `/api/analyze-screenshot` - POST endpoint for analyzing screenshots of conversations
+This is a monorepo containing both the frontend and API:
 
-## Environment Variables
-
-Required environment variables:
-- `OPENAI_API_KEY` - Your OpenAI API key
-
-## Deployment Instructions
-
-1. Fork or clone this repository
-2. Install Vercel CLI: `npm i -g vercel`
-3. Login to Vercel: `vercel login`
-4. Deploy to Vercel: `vercel`
-5. Set environment variables in Vercel:
-   ```bash
-   vercel env add OPENAI_API_KEY
-   ```
-6. Deploy to production:
-   ```bash
-   vercel --prod
-   ```
+- `/` - Frontend (Vite + React)
+- `/api` - Backend (Next.js API routes)
 
 ## Development
 
+To run the project locally:
+
 1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Create `.env.local` with required environment variables:
-   ```
-   OPENAI_API_KEY=your_key_here
-   ```
-
-3. Run development server:
-   ```bash
-   npm run dev
-   ```
-
-## Frontend Integration
-
-The API endpoints can be called from the Lovable frontend at https://situationship-calculator.lovable.app/ using:
-
-```javascript
-// Text analysis
-fetch('https://your-vercel-url/api/analyze-text', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ text: 'conversation text here' })
-});
-
-// Screenshot analysis
-const formData = new FormData();
-formData.append('image', imageFile);
-fetch('https://your-vercel-url/api/analyze-screenshot', {
-  method: 'POST',
-  body: formData
-});
-```
-
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set up environment variables:
+Create `.env.local` in the `/api` directory with:
+```
+OPENAI_API_KEY=your_key_here
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run development servers:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Frontend:
+```bash
+npm run dev:frontend
+```
 
-## Learn More
+API:
+```bash
+npm run dev:api
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Frontend
+The frontend is deployed on Lovable at https://situationship-calculator.lovable.app/
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### API
+The API is deployed on Vercel. To deploy:
 
-## Deploy on Vercel
+1. Connect your GitHub repository to Vercel
+2. Set the root directory to `/api`
+3. Add environment variables in Vercel dashboard:
+   - `OPENAI_API_KEY`
+4. Deploy!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Endpoints
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### POST /api/analyze-text
+Analyzes text conversations with AI-powered insights.
+
+### POST /api/analyze-screenshot
+Analyzes screenshots of conversations using GPT-4 Vision.
+
+Both endpoints return:
+- Delulu Score (1-5 scale with fun descriptions)
+- Detailed situation analysis
+- Relationship probability
+- Strategic advice
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request

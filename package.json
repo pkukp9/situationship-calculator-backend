@@ -1,26 +1,17 @@
 {
   "name": "situationship-calculator",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "API for analyzing situationships using GPT-4",
+  "main": "api/analyze-text.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "next": "14.1.0",
-    "openai": "^4.28.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "sharp": "^0.33.2"
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "openai": "^4.28.0"
   },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-    "typescript": "^5"
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+const OpenAI = require('openai');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -7,31 +6,31 @@ const openai = new OpenAI({
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type,X-CSRF-Token,X-Requested-With,Accept,Accept-Version,Content-Length,Content-MD5,Date,X-Api-Version',
-  'Access-Control-Allow-Credentials': 'true'
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type'
 };
 
-// Handle CORS preflight requests
-export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders });
-}
+module.exports = async (req, res) => {
+  // Set CORS headers for all responses
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
-export async function POST(request: NextRequest) {
   // Handle CORS preflight
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, { status: 200, headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const body = await request.json();
-    const { image } = body;
+    const { image } = req.body;
 
     if (!image) {
-      return NextResponse.json(
-        { error: "Bestie, we need a screenshot to analyze!" },
-        { status: 400, headers: corsHeaders }
-      );
+      return res.status(400).json({ error: "Bestie, we need a screenshot to analyze!" });
     }
 
     const completion = await openai.chat.completions.create({
@@ -80,18 +79,15 @@ export async function POST(request: NextRequest) {
 
     const probability = lines.find(l => l.includes('%'))?.match(/(\d+)%/)?.[1] || '0';
     
-    return NextResponse.json({
+    return res.status(200).json({
       delulu_score: parseInt(deluluScore),
       delulu_description: deluluDescription,
       summary: response,
       relationship_probability: parseInt(probability),
       advice: lines.slice(-1)[0] || "Keep manifesting, bestie!"
-    }, { headers: corsHeaders });
+    });
   } catch (error) {
     console.error('Error processing screenshot:', error);
-    return NextResponse.json(
-      { error: "Ope! Something went wrong analyzing your situation" },
-      { status: 500, headers: corsHeaders }
-    );
+    return res.status(500).json({ error: "Ope! Something went wrong analyzing your situation" });
   }
-} 
+}; 
