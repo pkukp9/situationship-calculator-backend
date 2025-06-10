@@ -26,11 +26,24 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const { image } = req.body;
+  // Parse JSON body for Vercel serverless functions
+  if (typeof req.body === 'string') {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (e) {
+      return res.status(400).json({ error: "Invalid JSON body" });
+    }
+  }
 
-    if (!image) {
+  try {
+    const { screenshot, mimeType } = req.body;
+
+    if (!screenshot) {
       return res.status(400).json({ error: "Bestie, we need a screenshot to analyze!" });
+    }
+
+    if (!mimeType || !mimeType.startsWith('image/')) {
+      return res.status(400).json({ error: "Invalid image format!" });
     }
 
     const completion = await openai.chat.completions.create({
@@ -58,7 +71,7 @@ module.exports = async (req, res) => {
             },
             {
               type: "image_url",
-              image_url: image
+              image_url: screenshot
             }
           ]
         }
