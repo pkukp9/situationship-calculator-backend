@@ -1,3 +1,6 @@
+// Version: 2.0 - Fixed field names
+console.log('Screenshot API deployed:', new Date().toISOString());
+
 const OpenAI = require('openai');
 
 const openai = new OpenAI({
