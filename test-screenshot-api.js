@@ -1,12 +1,13 @@
-const fs = require('fs');
 const http = require('http');
 
-// Sample base64 image (1x1 transparent PNG)
-const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+// Test URLs - using publicly accessible images
+const screenshotUrls = [
+  'https://i.imgur.com/example1.jpg',  // Replace with real image URLs
+  'https://i.imgur.com/example2.jpg'   // Replace with real image URLs
+];
 
 const requestData = JSON.stringify({
-  screenshot: sampleBase64,
-  mimeType: 'image/png'
+  screenshotUrls
 });
 
 const options = {
@@ -20,6 +21,8 @@ const options = {
   }
 };
 
+console.log('Sending request with URLs:', screenshotUrls);
+
 const req = http.request(options, (res) => {
   console.log(`Status Code: ${res.statusCode}`);
   
@@ -29,7 +32,26 @@ const req = http.request(options, (res) => {
   });
   
   res.on('end', () => {
-    console.log('Response:', JSON.parse(data));
+    const response = JSON.parse(data);
+    console.log('\nResponse Summary:');
+    console.log('Total Screenshots:', response.total_screenshots);
+    console.log('Successful Analyses:', response.successful_analyses);
+    
+    if (response.analyses) {
+      console.log('\nAnalyses:');
+      response.analyses.forEach((analysis, index) => {
+        console.log(`\nScreenshot ${index + 1}:`);
+        if (analysis.error) {
+          console.log('Error:', analysis.error);
+        } else {
+          console.log('URL:', analysis.url);
+          console.log('Delulu Score:', analysis.delulu_score);
+          console.log('Description:', analysis.delulu_description);
+          console.log('Probability:', analysis.relationship_probability + '%');
+          console.log('Advice:', analysis.advice);
+        }
+      });
+    }
   });
 });
 
