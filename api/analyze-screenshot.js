@@ -69,13 +69,31 @@ export default async function handler(req) {
             max_tokens: 1000
           });
 
-          const content = response.choices[0].message.content || '';
-          console.log("OpenAI raw content:", content);
-
+          const content = response.choices[0].message.content || "";
+          console.log("RAW AI RESPONSE:", content);
+          
           const lines = content.split('\n').filter(Boolean);
+          console.log("Parsed lines:", lines);
 
-          const levelLine = lines.find(line => line?.includes('Level'));
-          const deluluScore = levelLine?.match(/Level (\d)/)?.[1];
+          // Extract delulu score first to help with summary bounds
+          const levelLine = lines.find(line => line.includes('Level'));
+          const deluluScore = levelLine?.match(/Level (\d)/)?.[1] || '1';
+          console.log("Found level line:", levelLine);
+          console.log("Extracted delulu score:", deluluScore);
+
+          // Extract probability
+          const probabilityLine = lines.find(line => line.includes('%'));
+          const probability = probabilityLine?.match(/(\d+)%/)?.[1] || '0';
+          console.log("Found probability line:", probabilityLine);
+          console.log("Extracted probability:", probability);
+
+          // Extract summary: content between delulu score and probability
+          const levelIndex = lines.findIndex(line => line.includes('Level'));
+          const probIndex = lines.findIndex(line => line.includes('%'));
+          const summary = (levelIndex !== -1 && probIndex !== -1)
+            ? lines.slice(levelIndex + 1, probIndex).join('\n')
+            : content;
+          console.log("Extracted summary:", summary);
 
           const deluluDescriptionMap = {
             '1': "Pookie + 1 – You're on your way to having a Pookie",
@@ -85,17 +103,22 @@ export default async function handler(req) {
             '5': "Certified Delulu – You're the mayor of Deluluville"
           };
 
-          const probabilityLine = lines.find(line => line?.includes('%'));
-          const probability = probabilityLine?.match(/(\d+)%/)?.[1];
+          // Extract advice: prefer line starting with 'Advice:' or use last line
+          const adviceLine = lines.find(line => 
+            line.toLowerCase().includes('advice:') ||
+            line.toLowerCase().startsWith('advice')
+          );
+          const advice = adviceLine || lines.at(-1) || "Keep manifesting, bestie!";
+          console.log("Extracted advice:", advice);
 
           return {
             url,
-            delulu_score: deluluScore ? parseInt(deluluScore) : null,
-            delulu_description: deluluDescriptionMap[deluluScore] || null,
-            summary: content,
-            relationship_probability: probability ? parseInt(probability) : null,
-            advice: lines.at(-1) || "Couldn't extract advice – try uploading a clearer screenshot!",
-            error: deluluScore && probability ? null : "Incomplete AI output"
+            delulu_score: parseInt(deluluScore),
+            delulu_description: deluluDescriptionMap[deluluScore],
+            summary,
+            relationship_probability: parseInt(probability),
+            advice,
+            error: null
           };
         } catch (error) {
           console.error(`Error analyzing screenshot ${url}:`, error);
