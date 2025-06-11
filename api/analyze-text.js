@@ -1,141 +1,129 @@
-const OpenAI = require('openai');
+// Version: 3.0 - Vercel Edge Function with improved request handling
+export const config = { runtime: 'edge' };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import OpenAI from "openai";
 
-module.exports = async (req, res) => {
-  // Handle CORS preflight
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export default async function handler(req) {
+  console.log("🔍 analyze-text function was invoked");
+  
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // Handle preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return new Response(null, { status: 200, headers });
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }), 
+      { status: 405, headers: { ...headers, 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
-    const { text } = req.body;
+    const body = await req.json();
+    console.log("📥 Incoming analyze-text payload:", body);
 
-    if (!text) {
-      return res.status(400).json({ error: "Ope! You forgot to spill the tea (no text provided)" });
+    const { text } = body;
+
+    if (!text || typeof text !== 'string') {
+      const errorResponse = { error: 'Text content is required' };
+      console.log("❌ Error response:", errorResponse);
+      return new Response(
+        JSON.stringify(errorResponse),
+        { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (text.length < 40) {
-      return res.status(400).json({ error: "Ope! We need more tea (at least 40 characters)" });
-    }
+    console.log("Received analyze-text request:", { text });
 
-    const completion = await openai.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: `You are a relationship analyzer combining Paul Graham's concise, action-oriented writing with Carrie Bradshaw's wit and relationship insights. Your analysis should be:
-
-1. Direct and specific - no vague advice
-2. Action-oriented - clear next steps
-3. Backed by behavioral evidence
-4. Witty but practical
-5. Focused on patterns and red/green flags
-
-When calculating relationship probability:
-- Commitment indicators (exclusivity, meeting friends/family) +20-30%
-- Consistent communication and follow-through +15-25%
-- Future planning together +10-20%
-- Emotional availability and vulnerability +10-20%
-- Mixed signals or inconsistency -15-25%
-- One-sided effort -20-30%
-- Lack of progression over time -10-20%
-
-Base probability starts at 50% and adjusts based on these factors.`
+          content: "You are a sharp, witty relationship analyst who combines playful insight with grounded, logical advice. Analyze conversations with a blend of warmth and directness. Focus on clear, actionable insights without using pop culture references. Format your response in exactly 4 numbered sections, each on its own line, without any additional formatting or embedded section titles in the content."
         },
         {
           role: "user",
-          content: `Analyze this conversation and provide:
+          content: `Analyze this conversation and output exactly 4 lines in this order:
 
-1. DELULU SCORE (1-5) with matching description:
+1. Delulu Score: Level (1-5) with description:
    - Level 1: "Pookie + 1 – You're on your way to having a Pookie"
    - Level 2: "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours"
    - Level 3: "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009"
    - Level 4: "Wannabe Wifey – You've told your besties that you're getting married"
    - Level 5: "Certified Delulu – You're the mayor of Deluluville"
 
-2. ANALYSIS:
-   - Specific behaviors and patterns observed
-   - Power dynamics and effort balance
-   - Red/green flags
-   - Current relationship stage evidence
+2. Detailed Analysis: Provide 2-3 analytical sentences about the conversation dynamics, patterns, and implications
 
-3. RELATIONSHIP PROBABILITY (0-100%):
-   Calculate based on the scoring factors in system prompt.
-   Explain which factors influenced the score.
+3. Relationship Probability: A percentage (0-100%) with brief, logical reasoning
 
-4. STRATEGIC ADVICE:
-   - Specific actions to take (or avoid)
-   - Timeline for next steps
-   - Clear boundaries to set
-   - How to maintain power balance
-   
-Write like Paul Graham meets Carrie Bradshaw - clear, witty, and actionable.
-Example style: "He's showing boyfriend behavior without the boyfriend label. Text him less. Make plans with friends this weekend. If he wants you, he'll make it official."
+4. Strategic Advice: One clear, actionable recommendation based on the observed patterns (no embedded formatting or section titles)
 
-Here's the conversation: ${text}`
+Here's the conversation to analyze:
+${text}`
         }
       ],
+      max_tokens: 1000,
+      timeout: 9000 // 9 second timeout
     });
 
-    const response = completion.choices[0].message.content;
+    const content = response.choices[0].message.content;
     
-    // Split into main sections and clean up
-    const sections = response
-      .split(/\d\.\s+/)
-      .filter(Boolean)
-      .map(section => section.trim());
-    
-    // Extract delulu score from first section
-    const deluluMatch = sections[0]?.match(/Level (\d)|Score: (\d)/);
-    const deluluScore = deluluMatch ? (deluluMatch[1] || deluluMatch[2]) : '1';
-    const deluluDescription = {
+    // Process all regex matches in parallel for better performance
+    const [deluluScore, summaryMatch, probability, adviceMatch] = await Promise.all([
+      content.match(/1\.\s*Delulu Score:.*Level (\d)/)?.[1] || '1',
+      content.match(/2\.\s*Detailed Analysis:\s*(.*?)(?=3\.)/s),
+      content.match(/3\.\s*Relationship Probability:\s*(\d+)%/)?.[1] || '0',
+      content.match(/4\.\s*Strategic Advice:\s*(.*?)$/s)
+    ]);
+
+    const summary = summaryMatch ? summaryMatch[1].trim() : "";
+    const advice = adviceMatch ? adviceMatch[1].trim() : "Keep manifesting, bestie!";
+
+    const deluluDescriptionMap = {
       '1': "Pookie + 1 – You're on your way to having a Pookie",
       '2': "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours",
       '3': "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009",
       '4': "Wannabe Wifey – You've told your besties that you're getting married",
       '5': "Certified Delulu – You're the mayor of Deluluville"
-    }[deluluScore];
+    };
 
-    // Extract analysis from second section
-    const whatsHappening = sections[1]
-      ?.replace(/^(ANALYSIS:|Analysis:|Detailed Analysis:)/i, '')
-      .split('\n')
-      .map(line => line.trim())
-      .filter(Boolean)
-      .join('\n')
-      .trim() || '';
-    
-    // Extract probability from third section
-    const probabilityText = sections[2] || '';
-    const probabilityMatch = probabilityText.match(/(\d+)%/);
-    const probability = probabilityMatch ? probabilityMatch[1] : '0';
-    
-    // Extract advice from fourth section
-    const nextMove = sections[3]
-      ?.replace(/^(STRATEGIC ADVICE:|Strategic Advice:|Advice:)/i, '')
-      .split('\n')
-      .map(line => line.trim())
-      .filter(Boolean)
-      .join('\n')
-      .trim() || '';
-    
-    return res.status(200).json({
+    const result = {
       delulu_score: parseInt(deluluScore),
-      delulu_description: deluluDescription,
-      whats_happening: whatsHappening,
+      delulu_description: deluluDescriptionMap[deluluScore],
+      summary,
       relationship_probability: parseInt(probability),
-      next_move: nextMove
-    });
+      advice
+    };
+
+    console.log("📤 Outgoing analyze-text response:", result);
+
+    return new Response(
+      JSON.stringify(result),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' } 
+      }
+    );
   } catch (error) {
-    console.error('Error analyzing text:', error);
-    return res.status(500).json({ error: "Ope! Something went wrong analyzing your situation" });
+    console.error('❌ Error in analyze-text:', error);
+    const errorResponse = { error: error.message };
+    console.log("❌ Error response:", errorResponse);
+    return new Response(
+      JSON.stringify(errorResponse),
+      { 
+        status: 500, 
+        headers: { ...headers, 'Content-Type': 'application/json' } 
+      }
+    );
   }
-}; 
+} 
