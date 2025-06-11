@@ -46,7 +46,7 @@ export default async function handler(req) {
             messages: [
               {
                 role: "system",
-                content: "You are a sharp, witty relationship analyst who combines playful insight with grounded, logical advice. Analyze conversation screenshots with a blend of warmth and directness, maintaining a tone that's both engaging and practical. Focus on clear, actionable insights without relying on pop culture references or narrative flourishes. Keep your analysis structured but ensure each section is focused and self-contained."
+                content: "You are a sharp, witty relationship analyst who combines playful insight with grounded, logical advice. Analyze conversation screenshots with a blend of warmth and directness. Focus on clear, actionable insights without using pop culture references. Format your response in exactly 4 numbered sections, each on its own line, without any additional formatting or embedded section titles in the content."
               },
               {
                 role: "user",
@@ -54,16 +54,20 @@ export default async function handler(req) {
                   { type: "image_url", image_url: { url } },
                   {
                     type: "text",
-                    text: `Analyze this conversation screenshot and provide:
-                    1. A delulu score (1-5) with a matching description:
-                       - Level 1: "Pookie + 1 – You're on your way to having a Pookie"
-                       - Level 2: "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours"
-                       - Level 3: "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009"
-                       - Level 4: "Wannabe Wifey – You've told your besties that you're getting married"
-                       - Level 5: "Certified Delulu – You're the mayor of Deluluville"
-                    2. Detailed Analysis: Provide a clear, focused assessment of the conversation dynamics and patterns
-                    3. Relationship Probability: Give a percentage (0-100%) with brief, logical reasoning
-                    4. Strategic Advice: Offer one concise, actionable recommendation based specifically on the conversation patterns observed`
+                    text: `Analyze this conversation and output exactly 4 lines in this order:
+
+1. Delulu Score: Level (1-5) with description:
+   - Level 1: "Pookie + 1 – You're on your way to having a Pookie"
+   - Level 2: "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours"
+   - Level 3: "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009"
+   - Level 4: "Wannabe Wifey – You've told your besties that you're getting married"
+   - Level 5: "Certified Delulu – You're the mayor of Deluluville"
+
+2. Detailed Analysis: Provide 2-3 analytical sentences about the conversation dynamics, patterns, and implications
+
+3. Relationship Probability: A percentage (0-100%) with brief, logical reasoning
+
+4. Strategic Advice: One clear, actionable recommendation based on the observed patterns (no embedded formatting or section titles)`
                   }
                 ]
               }
@@ -75,20 +79,20 @@ export default async function handler(req) {
           console.log("RAW AI RESPONSE:", content);
 
           // Extract Delulu Score
-          const deluluScore = content.match(/Level (\d)/)?.[1] || '1';
+          const deluluScore = content.match(/1\.\s*Delulu Score:.*Level (\d)/)?.[1] || '1';
           console.log("Extracted delulu score:", deluluScore);
 
-          // Extract Relationship Probability
-          const probability = content.match(/Relationship Probability:\s*(\d+)%/)?.[1] || '0';
-          console.log("Extracted probability:", probability);
-
-          // Extract Summary (between "2. Detailed Analysis:" and "3. Relationship Probability:")
-          const summaryMatch = content.match(/2\.\s*Detailed Analysis:(.*?)3\.\s*Relationship Probability:/s);
+          // Extract Summary (everything between lines starting with "2." and "3.")
+          const summaryMatch = content.match(/2\.\s*Detailed Analysis:\s*(.*?)(?=3\.)/s);
           const summary = summaryMatch ? summaryMatch[1].trim() : "";
           console.log("Extracted summary:", summary);
 
+          // Extract Relationship Probability
+          const probability = content.match(/3\.\s*Relationship Probability:\s*(\d+)%/)?.[1] || '0';
+          console.log("Extracted probability:", probability);
+
           // Extract Advice (everything after "4. Strategic Advice:")
-          const adviceMatch = content.match(/4\.\s*Strategic Advice:(.*?)$/s);
+          const adviceMatch = content.match(/4\.\s*Strategic Advice:\s*(.*?)$/s);
           const advice = adviceMatch ? adviceMatch[1].trim() : "Keep manifesting, bestie!";
           console.log("Extracted advice:", advice);
 
