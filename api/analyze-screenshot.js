@@ -46,7 +46,7 @@ export default async function handler(req) {
             messages: [
               {
                 role: "system",
-                content: "You are a witty relationship analyzer with the combined personality of Carrie Bradshaw's wit and Samantha Jones' boldness from Sex and the City. Analyze conversation screenshots and provide insights about relationship dynamics."
+                content: "You are a sharp, witty relationship analyst who combines playful insight with grounded, logical advice. Analyze conversation screenshots with a blend of warmth and directness, maintaining a tone that's both engaging and practical. Focus on clear, actionable insights without relying on pop culture references or narrative flourishes. Keep your analysis structured but ensure each section is focused and self-contained."
               },
               {
                 role: "user",
@@ -61,9 +61,9 @@ export default async function handler(req) {
                        - Level 3: "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009"
                        - Level 4: "Wannabe Wifey – You've told your besties that you're getting married"
                        - Level 5: "Certified Delulu – You're the mayor of Deluluville"
-                    2. A detailed analysis of the situation
-                    3. A relationship probability (0-100%)
-                    4. Strategic Advice: (Provide a full sentence of clear, actionable advice based on the situation, maintaining your witty Carrie Bradshaw meets Samantha Jones voice)`
+                    2. Detailed Analysis: Provide a clear, focused assessment of the conversation dynamics and patterns
+                    3. Relationship Probability: Give a percentage (0-100%) with brief, logical reasoning
+                    4. Strategic Advice: Offer one concise, actionable recommendation based specifically on the conversation patterns observed`
                   }
                 ]
               }
@@ -82,14 +82,15 @@ export default async function handler(req) {
           const probability = content.match(/Relationship Probability:\s*(\d+)%/)?.[1] || '0';
           console.log("Extracted probability:", probability);
 
-          // Extract Advice
-          const adviceMatch = content.match(/Strategic Advice:\s*(.+)$/s);
+          // Extract Summary (between "2. Detailed Analysis:" and "3. Relationship Probability:")
+          const summaryMatch = content.match(/2\.\s*Detailed Analysis:(.*?)3\.\s*Relationship Probability:/s);
+          const summary = summaryMatch ? summaryMatch[1].trim() : "";
+          console.log("Extracted summary:", summary);
+
+          // Extract Advice (everything after "4. Strategic Advice:")
+          const adviceMatch = content.match(/4\.\s*Strategic Advice:(.*?)$/s);
           const advice = adviceMatch ? adviceMatch[1].trim() : "Keep manifesting, bestie!";
           console.log("Extracted advice:", advice);
-
-          // Extract Summary (before "Strategic Advice:")
-          const summary = content.split('Strategic Advice:')[0].replace(/^Analysis:\s*/i, '').trim();
-          console.log("Extracted summary:", summary);
 
           const deluluDescriptionMap = {
             '1': "Pookie + 1 – You're on your way to having a Pookie",
