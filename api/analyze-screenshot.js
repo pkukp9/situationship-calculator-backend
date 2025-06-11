@@ -71,26 +71,24 @@ export default async function handler(req) {
             max_tokens: 1000
           });
 
-          const content = response.choices[0].message.content || "";
+          const content = response.choices[0].message.content;
           console.log("RAW AI RESPONSE:", content);
-          
-          const lines = content.split('\n').filter(Boolean);
-          console.log("Parsed lines:", lines);
 
-          // Extract delulu score first
-          const levelLine = lines.find(line => line.includes('Level'));
-          const deluluScore = levelLine?.match(/Level (\d)/)?.[1] || '1';
-          console.log("Found level line:", levelLine);
+          // Extract Delulu Score
+          const deluluScore = content.match(/Level (\d)/)?.[1] || '1';
           console.log("Extracted delulu score:", deluluScore);
 
-          // Extract probability
-          const probabilityLine = lines.find(line => line.includes('%'));
-          const probability = probabilityLine?.match(/(\d+)%/)?.[1] || '0';
-          console.log("Found probability line:", probabilityLine);
+          // Extract Relationship Probability
+          const probability = content.match(/Relationship Probability:\s*(\d+)%/)?.[1] || '0';
           console.log("Extracted probability:", probability);
 
-          // Extract summary: all lines after first, removing markdown
-          const summary = lines.slice(1).join("\n").replace(/\*\*/g, "").trim();
+          // Extract Advice
+          const adviceMatch = content.match(/Strategic Advice:\s*(.+)$/s);
+          const advice = adviceMatch ? adviceMatch[1].trim() : "Keep manifesting, bestie!";
+          console.log("Extracted advice:", advice);
+
+          // Extract Summary (before "Strategic Advice:")
+          const summary = content.split('Strategic Advice:')[0].replace(/^Analysis:\s*/i, '').trim();
           console.log("Extracted summary:", summary);
 
           const deluluDescriptionMap = {
@@ -100,10 +98,6 @@ export default async function handler(req) {
             '4': "Wannabe Wifey – You've told your besties that you're getting married",
             '5': "Certified Delulu – You're the mayor of Deluluville"
           };
-
-          // Extract advice and remove markdown
-          const advice = lines.find(l => l.toLowerCase().includes("advice"))?.replace(/\*\*/g, "").trim() || "Keep manifesting, bestie!";
-          console.log("Extracted advice:", advice);
 
           return {
             url,
