@@ -66,30 +66,32 @@ const { screenshotUrls } = parsed;
           });
 
           const content = response.choices[0].message.content || '';
-const lines = content.split('\n').filter(Boolean); // ensures all lines are non-empty
+          console.log("OpenAI raw content:", content);
 
-const levelLine = lines.find(line => line && line.includes('Level'));
-const deluluScore = levelLine?.match(/Level (\d)/)?.[1] || '1';
+          const lines = content.split('\n').filter(Boolean);
 
-const deluluDescription = {
-  '1': "Pookie + 1 – You're on your way to having a Pookie",
-  '2': "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours",
-  '3': "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009",
-  '4': "Wannabe Wifey – You've told your besties that you're getting married",
-  '5': "Certified Delulu – You're the mayor of Deluluville"
-}[deluluScore];
+          const levelLine = lines.find(line => line?.includes('Level'));
+          const deluluScore = levelLine?.match(/Level (\d)/)?.[1];
 
-const probabilityLine = lines.find(line => line && line.includes('%'));
-const probability = probabilityLine?.match(/(\d+)%/)?.[1] || '0';
+          const deluluDescriptionMap = {
+            '1': "Pookie + 1 – You're on your way to having a Pookie",
+            '2': "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours",
+            '3': "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009",
+            '4': "Wannabe Wifey – You've told your besties that you're getting married",
+            '5': "Certified Delulu – You're the mayor of Deluluville"
+          };
+
+          const probabilityLine = lines.find(line => line?.includes('%'));
+          const probability = probabilityLine?.match(/(\d+)%/)?.[1];
 
           return {
             url,
-            delulu_score: parseInt(deluluScore),
-            delulu_description: deluluDescription,
+            delulu_score: deluluScore ? parseInt(deluluScore) : null,
+            delulu_description: deluluDescriptionMap[deluluScore] || null,
             summary: content,
-            relationship_probability: parseInt(probability),
-            advice: lines.slice(-1)[0] || "Keep manifesting, bestie!",
-            error: null
+            relationship_probability: probability ? parseInt(probability) : null,
+            advice: lines.at(-1) || "Couldn't extract advice – try uploading a clearer screenshot!",
+            error: deluluScore && probability ? null : "Incomplete AI output"
           };
         } catch (error) {
           console.error(`Error analyzing screenshot ${url}:`, error);
