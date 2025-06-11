@@ -65,18 +65,22 @@ const { screenshotUrls } = parsed;
             max_tokens: 1000
           });
 
-          const content = response.choices[0].message.content;
-          const lines = content?.split('\n') || [];
-          const deluluScore = lines.find(l => l.includes('Level'))?.match(/Level (\d)/)?.[1] || '1';
-          const deluluDescription = {
-            '1': "Pookie + 1 – You're on your way to having a Pookie",
-            '2': "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours",
-            '3': "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009",
-            '4': "Wannabe Wifey – You've told your besties that you're getting married",
-            '5': "Certified Delulu – You're the mayor of Deluluville"
-          }[deluluScore];
+          const content = response.choices[0].message.content || '';
+const lines = content.split('\n').filter(Boolean); // ensures all lines are non-empty
 
-          const probability = lines.find(l => l.includes('%'))?.match(/(\d+)%/)?.[1] || '0';
+const levelLine = lines.find(line => line && line.includes('Level'));
+const deluluScore = levelLine?.match(/Level (\d)/)?.[1] || '1';
+
+const deluluDescription = {
+  '1': "Pookie + 1 – You're on your way to having a Pookie",
+  '2': "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours",
+  '3': "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009",
+  '4': "Wannabe Wifey – You've told your besties that you're getting married",
+  '5': "Certified Delulu – You're the mayor of Deluluville"
+}[deluluScore];
+
+const probabilityLine = lines.find(line => line && line.includes('%'));
+const probability = probabilityLine?.match(/(\d+)%/)?.[1] || '0';
 
           return {
             url,
