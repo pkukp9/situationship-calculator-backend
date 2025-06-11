@@ -63,7 +63,7 @@ export default async function handler(req) {
                        - Level 5: "Certified Delulu – You're the mayor of Deluluville"
                     2. A detailed analysis of the situation
                     3. A relationship probability (0-100%)
-                    4. Strategic advice`
+                    4. Strategic Advice: (Provide a full sentence of clear, actionable advice based on the situation, maintaining your witty Carrie Bradshaw meets Samantha Jones voice)`
                   }
                 ]
               }
@@ -128,6 +128,8 @@ export default async function handler(req) {
         }
       })
     );
+
+    console.log("Final results array:", JSON.stringify(results, null, 2));
 
     return new Response(
       JSON.stringify({
