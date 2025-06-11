@@ -20,7 +20,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { screenshotUrls } = await req.json();
+    let rawBody = '';
+for await (const chunk of req) {
+  rawBody += chunk;
+}
+const parsed = JSON.parse(rawBody);
+const { screenshotUrls } = parsed;
+
 
     if (!Array.isArray(screenshotUrls) || screenshotUrls.length === 0) {
       return res.status(400).json({ error: 'screenshotUrls must be a non-empty array' });
