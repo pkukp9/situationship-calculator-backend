@@ -77,7 +77,7 @@ export default async function handler(req) {
           const lines = content.split('\n').filter(Boolean);
           console.log("Parsed lines:", lines);
 
-          // Extract delulu score first to help with summary bounds
+          // Extract delulu score first
           const levelLine = lines.find(line => line.includes('Level'));
           const deluluScore = levelLine?.match(/Level (\d)/)?.[1] || '1';
           console.log("Found level line:", levelLine);
@@ -89,12 +89,8 @@ export default async function handler(req) {
           console.log("Found probability line:", probabilityLine);
           console.log("Extracted probability:", probability);
 
-          // Extract summary: content between delulu score and probability
-          const levelIndex = lines.findIndex(line => line.includes('Level'));
-          const probIndex = lines.findIndex(line => line.includes('%'));
-          const summary = (levelIndex !== -1 && probIndex !== -1)
-            ? lines.slice(levelIndex + 1, probIndex).join('\n')
-            : content;
+          // Extract summary: all lines after first, removing markdown
+          const summary = lines.slice(1).join("\n").replace(/\*\*/g, "").trim();
           console.log("Extracted summary:", summary);
 
           const deluluDescriptionMap = {
@@ -105,12 +101,8 @@ export default async function handler(req) {
             '5': "Certified Delulu – You're the mayor of Deluluville"
           };
 
-          // Extract advice: prefer line starting with 'Advice:' or use last line
-          const adviceLine = lines.find(line => 
-            line.toLowerCase().includes('advice:') ||
-            line.toLowerCase().startsWith('advice')
-          );
-          const advice = adviceLine || lines.at(-1) || "Keep manifesting, bestie!";
+          // Extract advice and remove markdown
+          const advice = lines.find(l => l.toLowerCase().includes("advice"))?.replace(/\*\*/g, "").trim() || "Keep manifesting, bestie!";
           console.log("Extracted advice:", advice);
 
           return {
