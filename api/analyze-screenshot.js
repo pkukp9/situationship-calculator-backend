@@ -1,35 +1,39 @@
-// Version: 2.2 - Simplified URL handling with OpenAI's native URL support
-console.log('Screenshot API deployed:', new Date().toISOString());
+// Version: 3.0 - Vercel Edge Function with improved request handling
+export const config = { runtime: 'edge' };
 
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export default async function handler(req, res) {
-  // CORS setup
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+export default async function handler(req) {
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end(); // Handle preflight
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers });
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }), 
+      { status: 405, headers: { ...headers, 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
-    let rawBody = '';
-for await (const chunk of req) {
-  rawBody += chunk;
-}
-const parsed = JSON.parse(rawBody);
-const { screenshotUrls } = parsed;
-
+    const body = await req.json();
+    const { screenshotUrls } = body;
 
     if (!Array.isArray(screenshotUrls) || screenshotUrls.length === 0) {
-      return res.status(400).json({ error: 'screenshotUrls must be a non-empty array' });
+      return new Response(
+        JSON.stringify({ error: 'screenshotUrls must be a non-empty array' }),
+        { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
+      );
     }
 
     const results = await Promise.all(
@@ -108,13 +112,25 @@ const { screenshotUrls } = parsed;
       })
     );
 
-    return res.status(200).json({
-      analyses: results,
-      total_screenshots: screenshotUrls.length,
-      successful_analyses: results.filter(r => !r.error).length
-    });
+    return new Response(
+      JSON.stringify({
+        analyses: results,
+        total_screenshots: screenshotUrls.length,
+        successful_analyses: results.filter(r => !r.error).length
+      }),
+      { 
+        status: 200, 
+        headers: { ...headers, 'Content-Type': 'application/json' } 
+      }
+    );
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ error: error.message });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { ...headers, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 } 
