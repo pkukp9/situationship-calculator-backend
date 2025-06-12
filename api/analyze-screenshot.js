@@ -139,22 +139,34 @@ Here's the conversation to analyze (from multiple screenshots):
 ${combinedText}`
         }
       ],
+      temperature: 0.7,
       max_tokens: 1000
     });
 
     const content = response.choices[0].message.content;
     console.log("📤 AI Analysis:", content);
 
-    // Process all regex matches in parallel for better performance
+    // Improved regex patterns to better handle multi-screenshot analysis
     const [deluluScore, summaryMatch, probability, adviceMatch] = await Promise.all([
-      content.match(/1\.\s*Delulu Score:.*Level (\d)/)?.[1] || '1',
-      content.match(/2\.\s*Detailed Analysis:\s*(.*?)(?=3\.)/s),
-      content.match(/3\.\s*Relationship Probability:\s*(\d+)%/)?.[1] || '0',
-      content.match(/4\.\s*Strategic Advice:\s*(.*?)$/s)
+      // Match Delulu Score, including when it's part of a longer line
+      content.match(/(?:Delulu Score:|^1\.)[^\n]*?Level\s*(\d+)/i)?.[1] || '1',
+      // Match Detailed Analysis, being more flexible with formatting
+      content.match(/(?:Detailed Analysis:|^2\.)\s*((?:(?!^3\.).)*)/ms),
+      // Match Relationship Probability percentage
+      content.match(/(?:Relationship Probability:|^3\.)[^\n]*?(\d+)%/i)?.[1] || '0',
+      // Match Strategic Advice, being more flexible with formatting
+      content.match(/(?:Strategic Advice:|^4\.)\s*(.+?)(?:\n|$)/s)
     ]);
 
-    const summary = summaryMatch ? summaryMatch[1].trim() : "";
+    const summary = summaryMatch ? summaryMatch[1].trim() : "Analysis unavailable";
     const advice = adviceMatch ? adviceMatch[1].trim() : "Keep manifesting, bestie!";
+
+    console.log("📊 Extracted values:", {
+      deluluScore,
+      summary: summary.substring(0, 50) + "...",
+      probability,
+      advice: advice.substring(0, 50) + "..."
+    });
 
     const deluluDescriptionMap = {
       '1': "Pookie + 1 – You're on your way to having a Pookie",
@@ -164,17 +176,25 @@ ${combinedText}`
       '5': "Certified Delulu – You're the mayor of Deluluville"
     };
 
+    // Create analysis result for each screenshot while maintaining the overall analysis
     const result = {
-      analyses: [{
-        url: screenshotUrls[0], // Include first screenshot URL for backward compatibility
+      analyses: screenshotUrls.map((url, index) => ({
+        url,
         delulu_score: parseInt(deluluScore),
         delulu_description: deluluDescriptionMap[deluluScore],
         summary,
         relationship_probability: parseInt(probability),
         advice
-      }],
+      })),
       total_screenshots: screenshotUrls.length,
-      successful_analyses: validTexts.length
+      successful_analyses: validTexts.length,
+      combined_analysis: {
+        delulu_score: parseInt(deluluScore),
+        delulu_description: deluluDescriptionMap[deluluScore],
+        summary,
+        relationship_probability: parseInt(probability),
+        advice
+      }
     };
 
     console.log("📤 Final response:", result);
