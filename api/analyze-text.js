@@ -72,8 +72,7 @@ Here's the conversation to analyze:
 ${text}`
         }
       ],
-      max_tokens: 1000,
-      timeout: 9000 // 9 second timeout
+      max_tokens: 1000
     });
 
     const content = response.choices[0].message.content;
