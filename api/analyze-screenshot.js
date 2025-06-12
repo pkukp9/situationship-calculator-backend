@@ -31,6 +31,18 @@ export default async function handler(req) {
     const body = await req.json();
     const { screenshotUrls } = body;
 
+    // Enhanced logging of screenshotUrls array
+    console.log(`📥 Received ${screenshotUrls?.length || 0} screenshots:`);
+    if (Array.isArray(screenshotUrls)) {
+      screenshotUrls.forEach((url, index) => {
+        const isBase64 = url.startsWith('data:');
+        const preview = isBase64 
+          ? `${url.substring(0, 100)}...` 
+          : url;
+        console.log(`Screenshot ${index + 1}: ${isBase64 ? '[base64 data]' : preview}`);
+      });
+    }
+
     if (!Array.isArray(screenshotUrls) || screenshotUrls.length === 0) {
       return new Response(
         JSON.stringify({ error: 'screenshotUrls must be a non-empty array' }),
@@ -44,24 +56,37 @@ export default async function handler(req) {
     const screenshotAnalyses = await Promise.all(
       screenshotUrls.map(async (url, index) => {
         try {
+          console.log(`🔍 Processing screenshot ${index + 1}/${screenshotUrls.length}`);
+          
+          // Determine if URL is base64 or actual URL
+          const imageUrl = url.startsWith('data:') ? url : { url };
+          
           const response = await openai.chat.completions.create({
             model: "gpt-4v",
             messages: [
               {
                 role: "user",
                 content: [
-                  { type: "image_url", image_url: { url } },
+                  { type: "image_url", image_url: imageUrl },
                   { type: "text", text: "Extract and return ONLY the text content from this screenshot. Format it as a chat conversation if applicable." }
                 ]
               }
-            ],
-            max_tokens: 1000
+            ]
           });
           
-          console.log(`✓ Extracted text from screenshot ${index + 1}`);
-          return response.choices[0].message.content;
+          const extractedText = response.choices[0].message.content;
+          console.log(`✓ Screenshot ${index + 1} text (${extractedText.length} chars):`);
+          console.log('---BEGIN EXTRACTED TEXT---');
+          console.log(extractedText);
+          console.log('---END EXTRACTED TEXT---');
+          
+          return extractedText;
         } catch (error) {
-          console.error(`❌ Error processing screenshot ${index + 1}:`, error);
+          console.error(`❌ Error processing screenshot ${index + 1}:`);
+          console.error('Error message:', error.message);
+          if (error.response?.data) {
+            console.error('OpenAI API Error Details:', JSON.stringify(error.response.data, null, 2));
+          }
           return null;
         }
       })
@@ -78,7 +103,10 @@ export default async function handler(req) {
     }
 
     const combinedText = validTexts.join('\n\n--- Next Screenshot ---\n\n');
-    console.log("📝 Combined text from all screenshots:", combinedText);
+    console.log(`📝 Combined ${validTexts.length} texts (${combinedText.length} total chars):`);
+    console.log('---BEGIN COMBINED TEXT---');
+    console.log(combinedText);
+    console.log('---END COMBINED TEXT---');
 
     // Now analyze the combined text
     const response = await openai.chat.completions.create({
