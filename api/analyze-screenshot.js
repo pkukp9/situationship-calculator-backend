@@ -64,7 +64,7 @@ export default async function handler(req) {
           };
           
           const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4-vision-preview",
             messages: [
               {
                 role: "user",
@@ -77,11 +77,33 @@ export default async function handler(req) {
           });
           
           const extractedText = response.choices[0].message.content;
-          console.log(`✓ Screenshot ${index + 1} text (${extractedText.length} chars):`);
-          console.log('---BEGIN EXTRACTED TEXT---');
+          console.log(`\n🔍 Raw text from screenshot ${index + 1}/${screenshotUrls.length}:`);
+          console.log('------------------------');
           console.log(extractedText);
-          console.log('---END EXTRACTED TEXT---');
+          console.log('------------------------');
+          console.log(`Characters: ${extractedText.length}`);
           
+          // Log if the text seems empty or contains error messages
+          let rejectionReason = null;
+          if (!extractedText || extractedText.length < 10) {
+            rejectionReason = `too short (< 10 chars)`;
+            console.warn(`⚠️ Warning: Screenshot ${index + 1} extracted text is very short or empty`);
+          }
+          if (extractedText.toLowerCase().includes('error') || extractedText.toLowerCase().includes('could not')) {
+            rejectionReason = rejectionReason ? rejectionReason + ' and error-like content' : 'error-like content';
+            console.warn(`⚠️ Warning: Screenshot ${index + 1} might contain an error message`);
+          }
+
+          if (rejectionReason) {
+            console.log('------------------------');
+            console.log(`❌ Extracted text for screenshot ${index + 1} rejected:`);
+            console.log('Raw extracted text:', extractedText);
+            console.log('Character count:', extractedText ? extractedText.length : 0);
+            console.log('Rejection reason:', rejectionReason);
+            console.log('------------------------');
+            throw new Error(`Failed: ${rejectionReason}.`);
+          }
+
           return extractedText;
         } catch (error) {
           console.error(`❌ Error processing screenshot ${index + 1}:`);
@@ -109,6 +131,39 @@ export default async function handler(req) {
     console.log('---BEGIN COMBINED TEXT---');
     console.log(combinedText);
     console.log('---END COMBINED TEXT---');
+
+    // After extracting text from all screenshots, analyze each one individually for summary
+    const perScreenshotSummaries = await Promise.all(
+      validTexts.map(async (text, i) => {
+        try {
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are a sharp, witty relationship analyst. Summarize the following chat in 1-2 sentences."
+              },
+              {
+                role: "user",
+                content: text
+              }
+            ],
+            max_tokens: 200
+          });
+          const summary = response.choices[0].message.content;
+          console.log(`🧠 GPT summary raw output for screenshot ${i + 1}:`, summary);
+          console.log(`📏 Length: ${summary?.length}`);
+          if (!summary || summary.length < 5) {
+            console.warn(`⚠️ Summary too short or undefined for screenshot ${i + 1}. Marking as \"Analysis unavailable\"`);
+            return "Analysis unavailable";
+          }
+          return summary;
+        } catch (err) {
+          console.error(`❌ Error getting summary for screenshot ${i + 1}:`, err);
+          return "Analysis unavailable";
+        }
+      })
+    );
 
     // Now analyze the combined text
     const response = await openai.chat.completions.create({
@@ -182,7 +237,7 @@ ${combinedText}`
         url,
         delulu_score: parseInt(deluluScore),
         delulu_description: deluluDescriptionMap[deluluScore],
-        summary,
+        summary: perScreenshotSummaries[index],
         relationship_probability: parseInt(probability),
         advice
       })),
