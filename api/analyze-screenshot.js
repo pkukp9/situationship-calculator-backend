@@ -64,7 +64,7 @@ export default async function handler(req) {
           };
           
           const response = await openai.chat.completions.create({
-            model: "gpt-4-vision-preview",
+            model: "gpt-4o",
             messages: [
               {
                 role: "user",
@@ -112,7 +112,7 @@ export default async function handler(req) {
 
     // Now analyze the combined text
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
