@@ -58,11 +58,13 @@ export default async function handler(req) {
         try {
           console.log(`🔍 Processing screenshot ${index + 1}/${screenshotUrls.length}`);
           
-          // Determine if URL is base64 or actual URL
-          const imageUrl = url.startsWith('data:') ? url : { url };
+          // Format image URL correctly for OpenAI Vision API
+          const imageUrl = {
+            url: url.startsWith('data:') ? url : url
+          };
           
           const response = await openai.chat.completions.create({
-            model: "gpt-4v",
+            model: "gpt-4-vision-preview",
             messages: [
               {
                 role: "user",
