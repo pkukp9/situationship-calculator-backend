@@ -61,11 +61,11 @@ export default async function handler(req) {
 }
 
 Do not return a nested object for carrieBradshawSummary. Output a single flat string only.
-Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
+Do not add any explanation, commentary, or Markdown. Only output flat JSON. Do not include Markdown, commentary, nested objects, or explanation. All fields must match the types exactly.`
         },
         {
           role: "user",
-          content: `Analyze this conversation and return a JSON object as described above. Here is the conversation to analyze:\n${text}`
+          content: text
         }
       ],
       temperature: 0.7,

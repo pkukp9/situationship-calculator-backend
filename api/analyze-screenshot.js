@@ -132,39 +132,6 @@ export default async function handler(req) {
     console.log(combinedText);
     console.log('---END COMBINED TEXT---');
 
-    // After extracting text from all screenshots, analyze each one individually for summary
-    const perScreenshotSummaries = await Promise.all(
-      validTexts.map(async (text, i) => {
-        try {
-          const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: "You are a sharp, witty relationship analyst. Summarize the following chat in 1-2 sentences."
-              },
-              {
-                role: "user",
-                content: text
-              }
-            ],
-            max_tokens: 200
-          });
-          const summary = response.choices[0].message.content;
-          console.log(`🧠 GPT summary raw output for screenshot ${i + 1}:`, summary);
-          console.log(`📏 Length: ${summary?.length}`);
-          if (!summary || summary.length < 5) {
-            console.warn(`⚠️ Summary too short or undefined for screenshot ${i + 1}. Marking as \"Analysis unavailable\"`);
-            return "Analysis unavailable";
-          }
-          return summary;
-        } catch (err) {
-          console.error(`❌ Error getting summary for screenshot ${i + 1}:`, err);
-          return "Analysis unavailable";
-        }
-      })
-    );
-
     // Now analyze the combined text
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -183,11 +150,11 @@ export default async function handler(req) {
 }
 
 Do not return a nested object for carrieBradshawSummary. Output a single flat string only.
-Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
+Do not add any explanation, commentary, or Markdown. Only output flat JSON. Do not include Markdown, commentary, nested objects, or explanation. All fields must match the types exactly.`
         },
         {
           role: "user",
-          content: `Analyze this conversation and return a JSON object as described above. Here is the conversation to analyze:\n${combinedText}`
+          content: combinedText
         }
       ],
       temperature: 0.7,
