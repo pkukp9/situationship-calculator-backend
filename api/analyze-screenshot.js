@@ -9,7 +9,7 @@ export default async function handler(req) {
   console.log("🔍 analyze-screenshot function was invoked");
   
   // CORS headers
-  const headers = {
+  const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -17,14 +17,18 @@ export default async function handler(req) {
   
   // Handle preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers });
+    console.log("Handling OPTIONS preflight");
+    return new Response(null, { 
+      status: 200, 
+      headers: corsHeaders 
+    });
   }
   
   // Only allow POST
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { ...headers, 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
   
@@ -47,7 +51,7 @@ export default async function handler(req) {
     if (!Array.isArray(screenshotUrls) || screenshotUrls.length === 0) {
       return new Response(
         JSON.stringify({ error: 'screenshotUrls must be a non-empty array' }),
-        { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -123,7 +127,7 @@ export default async function handler(req) {
     if (validTexts.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Failed to extract text from any screenshots' }),
-        { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -200,7 +204,7 @@ Do not add any explanation, commentary, or Markdown. Only output flat JSON. Do n
         JSON.stringify(mappedResult),
         { 
           status: 200, 
-          headers: { ...headers, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     } catch (e) {
@@ -213,7 +217,7 @@ Do not add any explanation, commentary, or Markdown. Only output flat JSON. Do n
       JSON.stringify({ error: error.message }),
       { 
         status: 500, 
-        headers: { ...headers, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }
