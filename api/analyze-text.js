@@ -82,20 +82,16 @@ Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
 
       result = JSON.parse(cleaned);
       
-      // Ensure we only return the exact fields we want
-      const finalResult = {
-        carrieBradshawSummary: result.carrieBradshawSummary,
-        relationshipProbability: result.relationshipProbability,
-        deluluScale: result.deluluScale,
-        deluluLabel: result.deluluLabel,
-        advice: result.advice,
-        timestamp: result.timestamp
-      };
-
-      console.log("📤 Outgoing analyze-text response:", finalResult);
-
+      // Return only the exact fields we want
       return new Response(
-        JSON.stringify(finalResult),
+        JSON.stringify({
+          carrieBradshawSummary: result.carrieBradshawSummary,
+          relationshipProbability: result.relationshipProbability,
+          deluluScale: result.deluluScale,
+          deluluLabel: result.deluluLabel,
+          advice: result.advice,
+          timestamp: result.timestamp
+        }),
         { 
           status: 200, 
           headers: { ...headers, 'Content-Type': 'application/json' } 
