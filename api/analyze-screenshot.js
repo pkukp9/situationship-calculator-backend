@@ -178,13 +178,11 @@ export default async function handler(req) {
   "relationshipProbability": number (0-100),
   "deluluScale": number (1-5, lower = more likely relationship),
   "deluluLabel": "string (one of: 'Pookie + 1 – You're on your way to having a Pookie', 'Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours', 'Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009', 'Wannabe Wifey – You've told your besties that you're getting married', 'Certified Delulu – You're the mayor of Deluluville')",
-  "advice": "string (format as: '- Step 1: [specific action they can take right now]\\n- Step 2: [specific action they can take in the next few days]\\n- Step 3: [specific action they can take to deepen the connection]')"
+  "advice": "string (format as a warm, natural paragraph with 2-4 specific suggestions)"
 }
 
-For the advice field, provide 2-4 concrete, actionable steps that someone can take immediately or in the near future. Each step should be specific and behavior-oriented. Examples of good advice:
-- Step 1: Send them a funny meme about Netflix that shows you were thinking of your conversation
-- Step 2: Ask them about their favorite movie genre before your movie night
-- Step 3: Share a personal story about a memorable movie night you had
+For the advice field, write a single paragraph that feels like a best friend giving warm, emotionally intelligent advice. Include 2-4 specific suggestions that are actionable but natural. Write in a casual, supportive tone using full sentences. Examples of good advice:
+"Girl, I love how you're keeping it light and fun! Why not send them that funny Netflix meme you showed me yesterday? It's a cute way to show you were thinking about your conversation. And before your movie night, maybe ask what kind of snacks they like - it's a sweet way to show you care about their comfort. Most importantly, just be your amazing self and let things flow naturally. You've got this! 💕"
 
 Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
         },
