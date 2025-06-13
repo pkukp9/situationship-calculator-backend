@@ -49,31 +49,24 @@ export default async function handler(req) {
       messages: [
         {
           role: "system",
-          content: `You are a sharp, witty relationship analyst who combines playful insight with grounded, logical advice. Analyze conversations with a blend of warmth and directness. Focus on clear, actionable insights without using pop culture references. Your output must be valid JSON, matching the following structure and requirements:
+          content: `You are a JSON-only API. Return a valid JSON object that strictly matches this format:
 
 {
-  "deluluScale": number (1-5, lower = more likely relationship),
-  "deluluLabel": string,
-  "carrieBradshawSummary": string (format as: "Summary paragraph\n\n✨ What they might be looking for:\n- Point 1\n- Point 2\n\n💖 How to make them feel appreciated:\n- Point 1\n- Point 2"),
+  "carrieBradshawSummary": "string (format as: 'Summary paragraph\\n\\n✨ What they might be looking for:\\n- Point 1\\n- Point 2\\n\\n💖 How to make them feel appreciated:\\n- Point 1\\n- Point 2')",
   "relationshipProbability": number (0-100),
-  "advice": string (format as: "- Step 1\n- Step 2\n- Step 3"),
-  "timestamp": string (ISO format)
+  "deluluScale": number (1-5, lower = more likely relationship),
+  "deluluLabel": "string (one of: 'Pookie + 1 – You're on your way to having a Pookie', 'Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours', 'Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009', 'Wannabe Wifey – You've told your besties that you're getting married', 'Certified Delulu – You're the mayor of Deluluville')",
+  "advice": "string (format as: '- Step 1\\n- Step 2\\n- Step 3')"
 }
 
-The carrieBradshawSummary should include:
-1. A concise summary paragraph
-2. "✨ What they might be looking for:" followed by 2-3 bullet points
-3. "💖 How to make them feel appreciated:" followed by 2-3 bullet points
-
-The advice should be 2-4 very specific, actionable steps.
-
-Do not include any extra text or formatting outside the JSON object.`
+Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
         },
         {
           role: "user",
           content: `Analyze this conversation and return a JSON object as described above. Here is the conversation to analyze:\n${text}`
         }
       ],
+      temperature: 0.7,
       max_tokens: 1000
     });
 
@@ -88,12 +81,8 @@ Do not include any extra text or formatting outside the JSON object.`
 
     // Ensure all required fields are present and properly formatted
     const finalResult = {
-      deluluScale: parseInt(result.deluluScale) || 1,
-      deluluLabel: result.deluluLabel || "Pookie + 1 – You're on your way to having a Pookie",
-      carrieBradshawSummary: result.carrieBradshawSummary || "",
-      relationshipProbability: parseInt(result.relationshipProbability) || 0,
-      advice: result.advice || "",
-      timestamp: result.timestamp || new Date().toISOString()
+      ...result,
+      timestamp: new Date().toISOString()
     };
 
     console.log("📤 Outgoing analyze-text response:", finalResult);
