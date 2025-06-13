@@ -174,45 +174,26 @@ export default async function handler(req) {
           content: `You are a sharp, witty relationship analyst who combines playful insight with grounded, logical advice. Analyze conversations with a blend of warmth and directness. Focus on clear, actionable insights without using pop culture references. Your output must be valid JSON, matching the following structure and requirements:
 
 {
-  "delulu_score": number (1-5, lower = more likely relationship),
-  "delulu_description": string,
-  "carrieBradshawSummary": {
-    "summary": string (a concise summary paragraph of what's really happening),
-    "what_they_might_be_looking_for": [
-      // 2-4 emotionally intelligent bullet points, answering:
-      // - What is it that the other person in the texts wants to hear, based on what they're saying?
-      // - How can the user make them feel seen, heard, and appreciated in a way that puts them at ease?
-    ]
-  },
-  "relationship_probability": number (0-100, must align with delulu_score and emotional tone),
-  "advice": [
-    // 2-3 highly actionable, behaviorally specific steps, rooted in the analysis and what the other person responds well to
-    // Each step should account for emotional tone and be specific (e.g., "Send a thoughtful voice memo about [specific topic]", "Mention [specific shared experience] to build emotional safety")
-    // Avoid vague suggestions like "reflect more" or "be more open"
-  ]
+  "deluluScale": number (1-5, lower = more likely relationship),
+  "deluluLabel": string,
+  "carrieBradshawSummary": string (format as: "Summary paragraph\n\n✨ What they might be looking for:\n- Point 1\n- Point 2\n\n💖 How to make them feel appreciated:\n- Point 1\n- Point 2"),
+  "relationshipProbability": number (0-100),
+  "advice": string (format as: "- Step 1\n- Step 2\n- Step 3"),
+  "timestamp": string (ISO format)
 }
+
+The carrieBradshawSummary should include:
+1. A concise summary paragraph
+2. "✨ What they might be looking for:" followed by 2-3 bullet points
+3. "💖 How to make them feel appreciated:" followed by 2-3 bullet points
+
+The advice should be 2-4 very specific, actionable steps.
 
 Do not include any extra text or formatting outside the JSON object.`
         },
         {
           role: "user",
-          content: `Analyze this conversation and output exactly 4 lines in this order:
-
-1. Delulu Score: Level (1-5) with description:
-   - Level 1: "Pookie + 1 – You're on your way to having a Pookie"
-   - Level 2: "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours"
-   - Level 3: "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009"
-   - Level 4: "Wannabe Wifey – You've told your besties that you're getting married"
-   - Level 5: "Certified Delulu – You're the mayor of Deluluville"
-
-2. Detailed Analysis: Provide 2-3 analytical sentences about the conversation dynamics, patterns, and implications
-
-3. Relationship Probability: A percentage (0-100%) with brief, logical reasoning
-
-4. Strategic Advice: One clear, actionable recommendation based on the observed patterns (no embedded formatting or section titles)
-
-Here's the conversation to analyze (from multiple screenshots):
-${combinedText}`
+          content: `Analyze this conversation and return a JSON object as described above. Here is the conversation to analyze:\n${combinedText}`
         }
       ],
       temperature: 0.7,
@@ -222,67 +203,42 @@ ${combinedText}`
     const content = response.choices[0].message.content;
     console.log("📤 AI Analysis:", content);
 
-    // Improved regex patterns to better handle multi-screenshot analysis
-    const [deluluScore, summaryMatch, probability, adviceMatch] = await Promise.all([
-      // Match Delulu Score, including when it's part of a longer line
-      content.match(/(?:Delulu Score:|^1\.)[^\n]*?Level\s*(\d+)/i)?.[1] || '1',
-      // Match Detailed Analysis, being more flexible with formatting
-      content.match(/(?:Detailed Analysis:|^2\.)\s*((?:(?!^3\.).)*)/ms),
-      // Match Relationship Probability percentage
-      content.match(/(?:Relationship Probability:|^3\.)[^\n]*?(\d+)%/i)?.[1] || '0',
-      // Match Strategic Advice, being more flexible with formatting
-      content.match(/(?:Strategic Advice:|^4\.)\s*(.+?)(?:\n|$)/s)
-    ]);
-
-    const summary = summaryMatch ? summaryMatch[1].trim() : "Analysis unavailable";
-    const advice = adviceMatch ? adviceMatch[1].trim() : "Keep manifesting, bestie!";
-
-    console.log("📊 Extracted values:", {
-      deluluScore,
-      summary: summary.substring(0, 50) + "...",
-      probability,
-      advice: advice.substring(0, 50) + "..."
-    });
-
-    const deluluDescriptionMap = {
-      '1': "Pookie + 1 – You're on your way to having a Pookie",
-      '2': "Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours",
-      '3': "Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009",
-      '4': "Wannabe Wifey – You've told your besties that you're getting married",
-      '5': "Certified Delulu – You're the mayor of Deluluville"
-    };
+    // Parse the JSON response from the model
+    let result;
+    try {
+      result = JSON.parse(content);
+    } catch (e) {
+      console.error('❌ Failed to parse model JSON:', content);
+      throw new Error('Model did not return valid JSON.');
+    }
 
     // Create analysis result for each screenshot while maintaining the overall analysis
-    const result = {
+    const finalResult = {
       analyses: screenshotUrls.map((url, index) => ({
         url,
-        delulu_score: parseInt(deluluScore),
-        delulu_description: deluluDescriptionMap[deluluScore],
-        carrieBradshawSummary: {
-          summary: perScreenshotSummaries[index],
-          what_they_might_be_looking_for: []
-        },
-        relationship_probability: parseInt(probability),
-        advice
+        deluluScale: parseInt(result.deluluScale) || 1,
+        deluluLabel: result.deluluLabel || "Pookie + 1 – You're on your way to having a Pookie",
+        carrieBradshawSummary: perScreenshotSummaries[index],
+        relationshipProbability: parseInt(result.relationshipProbability) || 0,
+        advice: result.advice || "",
+        timestamp: result.timestamp || new Date().toISOString()
       })),
       total_screenshots: screenshotUrls.length,
       successful_analyses: validTexts.length,
       combined_analysis: {
-        delulu_score: parseInt(deluluScore),
-        delulu_description: deluluDescriptionMap[deluluScore],
-        carrieBradshawSummary: {
-          summary,
-          what_they_might_be_looking_for: []
-        },
-        relationship_probability: parseInt(probability),
-        advice
+        deluluScale: parseInt(result.deluluScale) || 1,
+        deluluLabel: result.deluluLabel || "Pookie + 1 – You're on your way to having a Pookie",
+        carrieBradshawSummary: result.carrieBradshawSummary || "",
+        relationshipProbability: parseInt(result.relationshipProbability) || 0,
+        advice: result.advice || "",
+        timestamp: result.timestamp || new Date().toISOString()
       }
     };
 
-    console.log("📤 Final response:", result);
+    console.log("📤 Final response:", finalResult);
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify(finalResult),
       { 
         status: 200, 
         headers: { ...headers, 'Content-Type': 'application/json' } 
