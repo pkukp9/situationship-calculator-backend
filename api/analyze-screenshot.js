@@ -175,16 +175,26 @@ Do not add any explanation, commentary, or Markdown. Only output flat JSON. Do n
 
       result = JSON.parse(cleaned);
       
+      // Map old field names to new ones if needed
+      const mappedResult = {
+        carrieBradshawSummary: result.carrieBradshawSummary || result.summary,
+        relationshipProbability: result.relationshipProbability || result.relationship_probability,
+        deluluScale: result.deluluScale || result.delulu_score,
+        deluluLabel: result.deluluLabel || result.delulu_description,
+        advice: result.advice,
+        timestamp: result.timestamp || new Date().toLocaleString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })
+      };
+      
       // Return only the exact fields we want
       return new Response(
-        JSON.stringify({
-          carrieBradshawSummary: result.carrieBradshawSummary,
-          relationshipProbability: result.relationshipProbability,
-          deluluScale: result.deluluScale,
-          deluluLabel: result.deluluLabel,
-          advice: result.advice,
-          timestamp: result.timestamp
-        }),
+        JSON.stringify(mappedResult),
         { 
           status: 200, 
           headers: { ...headers, 'Content-Type': 'application/json' } 
