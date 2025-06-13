@@ -101,11 +101,6 @@ export default async function handler(req) {
             console.warn(`⚠️ Warning: Screenshot ${index + 1} extracted text is very short or empty`);
             console.log("Content check failed - too short:", extractedText);
           }
-          if (extractedText.toLowerCase().includes('error') || extractedText.toLowerCase().includes('could not')) {
-            rejectionReason = rejectionReason ? rejectionReason + ' and error-like content' : 'error-like content';
-            console.warn(`⚠️ Warning: Screenshot ${index + 1} might contain an error message`);
-            console.log("Content check failed - error-like content:", extractedText);
-          }
 
           if (rejectionReason) {
             console.log('------------------------');
