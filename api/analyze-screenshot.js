@@ -68,18 +68,24 @@ export default async function handler(req) {
             url: url.startsWith('data:') ? url : url
           };
           
+          const prompt = [
+            {
+              role: "user",
+              content: [
+                { type: "image_url", image_url: imageUrl },
+                { type: "text", text: "Extract and return ONLY the text content from this screenshot. Format it as a chat conversation if applicable." }
+              ]
+            }
+          ];
+          
+          console.log("OpenAI prompt:", JSON.stringify(prompt, null, 2));
+          
           const response = await openai.chat.completions.create({
             model: "gpt-4o",
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "image_url", image_url: imageUrl },
-                  { type: "text", text: "Extract and return ONLY the text content from this screenshot. Format it as a chat conversation if applicable." }
-                ]
-              }
-            ]
+            messages: prompt
           });
+          
+          console.log("OpenAI raw response:", JSON.stringify(response, null, 2));
           
           const extractedText = response.choices[0].message.content;
           console.log(`\n🔍 Raw text from screenshot ${index + 1}/${screenshotUrls.length}:`);
@@ -93,10 +99,12 @@ export default async function handler(req) {
           if (!extractedText || extractedText.length < 10) {
             rejectionReason = `too short (< 10 chars)`;
             console.warn(`⚠️ Warning: Screenshot ${index + 1} extracted text is very short or empty`);
+            console.log("Content check failed - too short:", extractedText);
           }
           if (extractedText.toLowerCase().includes('error') || extractedText.toLowerCase().includes('could not')) {
             rejectionReason = rejectionReason ? rejectionReason + ' and error-like content' : 'error-like content';
             console.warn(`⚠️ Warning: Screenshot ${index + 1} might contain an error message`);
+            console.log("Content check failed - error-like content:", extractedText);
           }
 
           if (rejectionReason) {
