@@ -52,7 +52,7 @@ export default async function handler(req) {
           content: `You are a JSON-only API. Return a valid JSON object with exactly these 6 fields, no nesting:
 
 {
-  "carrieBradshawSummary": "string (summary paragraph)",
+  "carrieBradshawSummary": "string (bullet points, with Paul Graham's logic of being clear, direct, and insightful. Think with high emotional intelligence. Have a summary paragraph, then what they might be looking for and how to make them more interested in you, all formatted in a single plain-text string)",
   "relationshipProbability": number (0-100),
   "deluluScale": number (1-5),
   "deluluLabel": "string (one of: 'Pookie + 1 – You're on your way to having a Pookie', 'Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours', 'Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009', 'Wannabe Wifey – You've told your besties that you're getting married', 'Certified Delulu – You're the mayor of Deluluville')",
@@ -60,6 +60,7 @@ export default async function handler(req) {
   "timestamp": "June 13, 2025 at 03:00 PM"
 }
 
+Do not return a nested object for carrieBradshawSummary. Output a single flat string only.
 Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
         },
         {
