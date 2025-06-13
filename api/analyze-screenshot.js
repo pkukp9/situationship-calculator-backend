@@ -178,8 +178,13 @@ export default async function handler(req) {
   "relationshipProbability": number (0-100),
   "deluluScale": number (1-5, lower = more likely relationship),
   "deluluLabel": "string (one of: 'Pookie + 1 – You're on your way to having a Pookie', 'Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours', 'Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009', 'Wannabe Wifey – You've told your besties that you're getting married', 'Certified Delulu – You're the mayor of Deluluville')",
-  "advice": "string (format as: '- Step 1\\n- Step 2\\n- Step 3')"
+  "advice": "string (format as: '- Step 1: [specific action they can take right now]\\n- Step 2: [specific action they can take in the next few days]\\n- Step 3: [specific action they can take to deepen the connection]')"
 }
+
+For the advice field, provide 2-4 concrete, actionable steps that someone can take immediately or in the near future. Each step should be specific and behavior-oriented. Examples of good advice:
+- Step 1: Send them a funny meme about Netflix that shows you were thinking of your conversation
+- Step 2: Ask them about their favorite movie genre before your movie night
+- Step 3: Share a personal story about a memorable movie night you had
 
 Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
         },
@@ -195,10 +200,16 @@ Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
     const content = response.choices[0].message.content;
     console.log("📤 AI Analysis:", content);
 
-    // Parse the JSON response from the model
+    // Parse the JSON response from the model with markdown handling
     let result;
     try {
-      result = JSON.parse(content);
+      const raw = response.choices?.[0]?.message?.content ?? "";
+      const cleaned = raw
+        .replace(/```json\s*/, '')  // Remove ```json
+        .replace(/```$/, '')        // Remove ending ```
+        .trim();
+
+      result = JSON.parse(cleaned);
     } catch (e) {
       console.error('❌ Failed to parse model JSON:', content);
       throw new Error('Model did not return valid JSON.');
