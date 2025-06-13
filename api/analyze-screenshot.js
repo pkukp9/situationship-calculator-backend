@@ -6,7 +6,7 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req) {
-  console.log("🧪 analyze-screenshot function was invoked");
+  console.log("🔍 analyze-screenshot function was invoked");
   
   // CORS headers
   const headers = {
@@ -14,19 +14,20 @@ export default async function handler(req) {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
-
+  
   // Handle preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers });
   }
-
+  
+  // Only allow POST
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }), 
-      { status: 405, headers: { ...headers, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...headers, 'Content-Type': 'application/json' }
+    });
   }
-
+  
   try {
     const body = await req.json();
     const { screenshotUrls } = body;
