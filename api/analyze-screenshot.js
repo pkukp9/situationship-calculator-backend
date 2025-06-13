@@ -171,14 +171,15 @@ export default async function handler(req) {
       messages: [
         {
           role: "system",
-          content: `You are a JSON-only API. Return a valid JSON object that strictly matches this format:
+          content: `You are a JSON-only API. Return a valid JSON object with exactly these 6 fields, no nesting:
 
 {
-  "carrieBradshawSummary": "string (format as: 'Summary paragraph\\n\\n✨ What they might be looking for:\\n- Point 1\\n- Point 2\\n\\n💖 How to make them feel appreciated:\\n- Point 1\\n- Point 2')",
+  "carrieBradshawSummary": "string (summary paragraph)",
   "relationshipProbability": number (0-100),
-  "deluluScale": number (1-5, lower = more likely relationship),
+  "deluluScale": number (1-5),
   "deluluLabel": "string (one of: 'Pookie + 1 – You're on your way to having a Pookie', 'Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours', 'Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009', 'Wannabe Wifey – You've told your besties that you're getting married', 'Certified Delulu – You're the mayor of Deluluville')",
-  "advice": "string (2-4 sentences max, in Paul Graham's writing style: clear, direct, and insightful. Focus on specific, actionable steps that respect both people's autonomy. Example: 'Ask about their perspective on the AI ethics article, then share your own thoughts. If the conversation flows naturally, suggest exploring a related topic together. Remember that genuine intellectual connection often leads to deeper emotional bonds.' No fluff, no filler, just clear guidance.)"
+  "advice": "string (2-4 sentences max, in Paul Graham's writing style: clear, direct, and insightful. Focus on specific, actionable steps that respect both people's autonomy. Example: 'Ask about their perspective on the AI ethics article, then share your own thoughts. If the conversation flows naturally, suggest exploring a related topic together. Remember that genuine intellectual connection often leads to deeper emotional bonds.' No fluff, no filler, just clear guidance.)",
+  "timestamp": "June 13, 2025 at 03:00 PM"
 }
 
 Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
@@ -205,36 +206,30 @@ Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
         .trim();
 
       result = JSON.parse(cleaned);
+      
+      // Ensure we only return the exact fields we want
+      const finalResult = {
+        carrieBradshawSummary: result.carrieBradshawSummary,
+        relationshipProbability: result.relationshipProbability,
+        deluluScale: result.deluluScale,
+        deluluLabel: result.deluluLabel,
+        advice: result.advice,
+        timestamp: result.timestamp
+      };
+
+      console.log("📤 Final response:", finalResult);
+
+      return new Response(
+        JSON.stringify(finalResult),
+        { 
+          status: 200, 
+          headers: { ...headers, 'Content-Type': 'application/json' } 
+        }
+      );
     } catch (e) {
       console.error('❌ Failed to parse model JSON:', content);
       throw new Error('Model did not return valid JSON.');
     }
-
-    // Create analysis result for each screenshot while maintaining the overall analysis
-    const finalResult = {
-      analyses: screenshotUrls.map((url, index) => ({
-        url,
-        ...result,
-        carrieBradshawSummary: perScreenshotSummaries[index],
-        timestamp: new Date().toISOString()
-      })),
-      total_screenshots: screenshotUrls.length,
-      successful_analyses: validTexts.length,
-      combined_analysis: {
-        ...result,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-    console.log("📤 Final response:", finalResult);
-
-    return new Response(
-      JSON.stringify(finalResult),
-      { 
-        status: 200, 
-        headers: { ...headers, 'Content-Type': 'application/json' } 
-      }
-    );
   } catch (error) {
     console.error('Error:', error);
     return new Response(
