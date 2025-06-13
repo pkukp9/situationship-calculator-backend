@@ -56,11 +56,8 @@ export default async function handler(req) {
   "relationshipProbability": number (0-100),
   "deluluScale": number (1-5, lower = more likely relationship),
   "deluluLabel": "string (one of: 'Pookie + 1 – You're on your way to having a Pookie', 'Situationship Final Boss – You talk most days but then they leave you on delivered for 6 hours', 'Brainrot Baddie – You've already stalked their Spotify, Venmo, and their Mom's Facebook from 2009', 'Wannabe Wifey – You've told your besties that you're getting married', 'Certified Delulu – You're the mayor of Deluluville')",
-  "advice": "string (format as a warm, natural paragraph with 2-4 specific suggestions)"
+  "advice": "string (2-4 sentences max, in Paul Graham's writing style: clear, direct, and insightful. Focus on specific, actionable steps that respect both people's autonomy. Example: 'Ask about their perspective on the AI ethics article, then share your own thoughts. If the conversation flows naturally, suggest exploring a related topic together. Remember that genuine intellectual connection often leads to deeper emotional bonds.' No fluff, no filler, just clear guidance.)"
 }
-
-For the advice field, write a single paragraph that feels like a best friend giving warm, emotionally intelligent advice. Include 2-4 specific suggestions that are actionable but natural. Write in a casual, supportive tone using full sentences. Examples of good advice:
-"Girl, I love how you're keeping it light and fun! Why not send them that funny Netflix meme you showed me yesterday? It's a cute way to show you were thinking about your conversation. And before your movie night, maybe ask what kind of snacks they like - it's a sweet way to show you care about their comfort. Most importantly, just be your amazing self and let things flow naturally. You've got this! 💕"
 
 Do not add any explanation, commentary, or Markdown. Only output raw JSON.`
         },
